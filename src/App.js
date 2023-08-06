@@ -13,11 +13,17 @@ const App = () => {
   const [seconds, setSeconds] = useState(30);
   const [gameStarted, setGameStarted] = useState(false);
   const [roomCode, setRoomCode] = useState("");
-  const socket = io("http://localhost:3000");  // replace with your server address
+  const [hasCreatedRoom, setHasCreatedRoom] = useState(false);
+  const [hasEnteredRoom, setHasEnteredRoom] = useState(false);
+  const socket = io("https://your-socket-server-address");
 
   const handleClick = (i, j) => {
     if (board[i][j] !== EMPTY) return;
     setGameStarted(true);
+    if (checkThreeThree(board, currentPlayer, i, j) || checkFourFour(board, currentPlayer, i, j)) {
+      window.alert(currentPlayer === BLACK ? '흑돌은 삼삼이나 사사이 상황이므로 돌을 놓을 수 없습니다.' : '삼삼이 상황이므로 돌을 놓을 수 없습니다.');
+      return;
+    }
     const newBoard = [...board];
     newBoard[i][j] = currentPlayer;
     setBoard(newBoard);
@@ -40,6 +46,7 @@ const App = () => {
 
   const joinRoom = () => {
     socket.emit("join room", roomCode);
+    setHasCreatedRoom(true);
   };
 
   useEffect(() => {
@@ -57,6 +64,10 @@ const App = () => {
       setBoard(newBoard);
       setCurrentPlayer(player === BLACK ? WHITE : BLACK);
       setSeconds(30);
+    });
+
+    socket.on('user joined', () => {
+      setHasEnteredRoom(true);
     });
 
     return () => {
@@ -156,36 +167,45 @@ const App = () => {
 
   return (
     <div className="App">
-      <input value={roomCode} onChange={(e) => setRoomCode(e.target.value)} />
-      <button onClick={joinRoom}>Join Room</button>
-      <div className="timer">Time remaining: {seconds} seconds</div>
-      <div className="game-status">
-        <div className="player">
-          <div className="name">Player 1</div>
-          <div className="stone emoji">⚫</div>
-        </div>
-        <div className="player">
-          <div className="name">Player 2</div>
-          <div className="stone emoji">⚪</div>
-        </div>
-        <div className="turn">
-          Turn: 
-          <div className="stone emoji">{currentPlayer === BLACK ? '⚫' : '⚪'}</div>
-        </div>
-      </div>
-      <div className="board">
-        {board.map((row, i) => (
-          <div key={i} className="row">
-            {row.map((cell, j) => (
-              <div key={j} className="cell" onClick={() => handleClick(i, j)}>
-                {cell === BLACK && <div className="stone black" />}
-                {cell === WHITE && <div className="stone white" />}
+      {!hasCreatedRoom ? (
+        <>
+          <input value={roomCode} onChange={(e) => setRoomCode(e.target.value)} />
+          <button onClick={joinRoom}>Create Room</button>
+        </>
+      ) : !hasEnteredRoom ? (
+        <p>Waiting for another user to join...</p>
+      ) : (
+        <>
+          <div className="timer">Time remaining: {seconds} seconds</div>
+          <div className="game-status">
+            <div className="player">
+              <div className="name">Player 1</div>
+              <div className="stone emoji">⚫</div>
+            </div>
+            <div className="player">
+              <div className="name">Player 2</div>
+              <div className="stone emoji">⚪</div>
+            </div>
+            <div className="turn">
+              Turn: 
+              <div className="stone emoji">{currentPlayer === BLACK ? '⚫' : '⚪'}</div>
+            </div>
+          </div>
+          <div className="board">
+            {board.map((row, i) => (
+              <div key={i} className="row">
+                {row.map((cell, j) => (
+                  <div key={j} className="cell" onClick={() => handleClick(i, j)}>
+                    {cell === BLACK && <div className="stone black" />}
+                    {cell === WHITE && <div className="stone white" />}
+                  </div>
+                ))}
               </div>
             ))}
           </div>
-        ))}
-      </div>
-      <button onClick={resetBoard}>Reset Board</button>
+          <button onClick={resetBoard}>Reset Board</button>
+        </>
+      )}
     </div>
   );
 };
