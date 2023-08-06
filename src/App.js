@@ -12,8 +12,8 @@ const App = () => {
 
   const handleClick = (i, j) => {
     if (board[i][j] !== EMPTY) return;
-    if (checkThreeThree(board, currentPlayer, i, j)) {
-      window.alert('삼삼이 상황이므로 돌을 놓을 수 없습니다.');
+    if (checkThreeThree(board, currentPlayer, i, j) || checkFourFour(board, currentPlayer, i, j)) {
+      window.alert(currentPlayer === BLACK ? '흑돌은 삼삼이나 사사이 상황이므로 돌을 놓을 수 없습니다.' : '삼삼이 상황이므로 돌을 놓을 수 없습니다.');
       return;
     }
     const newBoard = [...board];
@@ -82,10 +82,42 @@ const App = () => {
     }
     return threeCount >= 2;
   }
-  
-  
-  
-  
+
+  const checkFourFour = (board, player, row, col) => {
+    if (player !== BLACK) return false;  // 4x4는 흑돌에만 적용
+    const directions = [[0, 1], [1, 0], [1, 1], [1, -1]];
+    let fourCount = 0;
+    for (let [dx, dy] of directions) {
+      for (let i = -1; i <= 0; i++) {
+        let count = 1;  // 중심 돌을 포함
+        for (let j = 1; j <= 3; j++) {
+          const x1 = row + (i + j) * dx;
+          const y1 = col + (i + j) * dy;
+          const x2 = row - (i + j) * dx;
+          const y2 = col - (i + j) * dy;
+          if (x1 >= 0 && y1 >= 0 && x1 < BOARD_SIZE && y1 < BOARD_SIZE && board[x1][y1] === player) {
+            count++;
+          }
+          if (x2 >= 0 && y2 >= 0 && x2 < BOARD_SIZE && y2 < BOARD_SIZE && board[x2][y2] === player) {
+            count++;
+          }
+        }
+        if (count === 4) {  // 돌이 4개인 경우
+          // 양쪽 끝 셀 확인
+          const x1 = row + (i + 4) * dx;
+          const y1 = col + (i + 4) * dy;
+          const x2 = row - (i + 4) * dx;
+          const y2 = col - (i + 4) * dy;
+          if ((x1 >= 0 && y1 >= 0 && x1 < BOARD_SIZE && y1 < BOARD_SIZE && board[x1][y1] === EMPTY) &&
+              (x2 >= 0 && y2 >= 0 && x2 < BOARD_SIZE && y2 < BOARD_SIZE && board[x2][y2] === EMPTY)) {
+            fourCount++;
+            break;  // 한 방향에 대한 4x4를 찾는 경우를 최대 1번으로 제한
+          }
+        }
+      }
+    }
+    return fourCount >= 2;
+  }
 
   return (
     <div className="App">
