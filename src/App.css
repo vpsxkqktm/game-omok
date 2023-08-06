@@ -5,12 +5,14 @@
   align-items: center;
   height: 100vh;
   background-color: #f0f0f0;
+  font-family: Arial, sans-serif;
 }
 
 .board {
   display: flex;
   flex-direction: column;
   gap: 2px;
+  margin-bottom: 20px;
 }
 
 .row {
@@ -21,11 +23,12 @@
 .cell {
   width: 30px;
   height: 30px;
-  background-color: #DDB892; /* light brown */
+  background-color: #DDB892;
   display: flex;
   justify-content: center;
   align-items: center;
   cursor: pointer;
+  border: 1px solid #B37D4E;
 }
 
 .stone {
@@ -43,7 +46,12 @@
 }
 
 button {
-  margin-top: 20px;
+  padding: 10px 20px;
+  border: none;
+  background-color: #ddd;
+  cursor: pointer;
+  font-size: 16px;
+  border-radius: 5px;
 }
 
 .marker.forbidden {
@@ -52,4 +60,43 @@ button {
   height: 80%;
   border-radius: 50%;
   opacity: 0.5;
+}
+
+.game-status {
+  display: flex;
+  justify-content: space-between;
+  width: 500px;
+  margin-bottom: 20px;
+  background-color: #ddd;
+  padding: 10px;
+  border-radius: 5px;
+}
+
+.player {
+  display: flex;
+  align-items: center;
+  width: 150px;
+  justify-content: space-between;
+}
+
+.name {
+  font-weight: bold;
+}
+
+.turn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100px;
+}
+
+.emoji {
+  font-size: 1.5em;
+}
+
+.timer {
+  margin-bottom: 20px;
+  background-color: #ddd;
+  padding: 10px;
+  border-radius: 5px;
 }

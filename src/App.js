@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './App.css';
 
 const BOARD_SIZE = 15;
@@ -9,9 +9,12 @@ const WHITE = 2;
 const App = () => {
   const [board, setBoard] = useState(Array(BOARD_SIZE).fill().map(() => Array(BOARD_SIZE).fill(EMPTY)));
   const [currentPlayer, setCurrentPlayer] = useState(BLACK);
+  const [seconds, setSeconds] = useState(30);
+  const [gameStarted, setGameStarted] = useState(false);
 
   const handleClick = (i, j) => {
     if (board[i][j] !== EMPTY) return;
+    setGameStarted(true);
     if (checkThreeThree(board, currentPlayer, i, j) || checkFourFour(board, currentPlayer, i, j)) {
       window.alert(currentPlayer === BLACK ? '흑돌은 삼삼이나 사사이 상황이므로 돌을 놓을 수 없습니다.' : '삼삼이 상황이므로 돌을 놓을 수 없습니다.');
       return;
@@ -24,13 +27,32 @@ const App = () => {
       resetBoard();
     } else {
       setCurrentPlayer(currentPlayer === BLACK ? WHITE : BLACK);
+      setSeconds(30);
     }
   }
 
   const resetBoard = () => {
     setBoard(Array(BOARD_SIZE).fill().map(() => Array(BOARD_SIZE).fill(EMPTY)));
     setCurrentPlayer(BLACK);
+    setSeconds(30);
+    setGameStarted(false);
   }
+
+  useEffect(() => {
+    let timerId = null;
+    if (gameStarted && seconds > 0) {
+      timerId = setTimeout(() => setSeconds(seconds - 1), 1000);
+    } else if (gameStarted && seconds === 0) {
+      window.alert('You lose');
+      resetBoard();
+    }
+  
+    return () => {
+      if (timerId) {
+        clearTimeout(timerId);
+      }
+    }
+  }, [gameStarted, seconds]);
 
   const checkWin = (board, player, row, col) => {
     const directions = [[0, 1], [1, 0], [1, 1], [1, -1]];
@@ -121,6 +143,21 @@ const App = () => {
 
   return (
     <div className="App">
+      <div className="timer">Time remaining: {seconds} seconds</div>
+      <div className="game-status">
+        <div className="player">
+          <div className="name">Player 1</div>
+          <div className="stone emoji">⚫</div>
+        </div>
+        <div className="player">
+          <div className="name">Player 2</div>
+          <div className="stone emoji">⚪</div>
+        </div>
+        <div className="turn">
+          Turn: 
+          <div className="stone emoji">{currentPlayer === BLACK ? '⚫' : '⚪'}</div>
+        </div>
+      </div>
       <div className="board">
         {board.map((row, i) => (
           <div key={i} className="row">
