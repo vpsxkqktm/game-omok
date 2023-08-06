@@ -12,12 +12,11 @@ const App = () => {
 
   const handleClick = (i, j) => {
     if (board[i][j] !== EMPTY) return;
-    const newBoard = [...board];
-    newBoard[i][j] = currentPlayer;
-    if (checkThreeThree(newBoard, currentPlayer, i, j)) {
+    if (checkThreeThree(board, currentPlayer, i, j)) {
       window.alert('삼삼이 상황이므로 돌을 놓을 수 없습니다.');
-      return;  // 돌을 두지 않음
+      return;
     }
+    const newBoard = [...board];
     newBoard[i][j] = currentPlayer;
     setBoard(newBoard);
     if (checkWin(newBoard, currentPlayer, i, j)) {
