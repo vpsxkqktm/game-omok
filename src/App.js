@@ -1,8 +1,5 @@
 import React, { useState, useEffect } from 'react';
-<<<<<<< HEAD
-=======
 import io from 'socket.io-client';
->>>>>>> main
 import './App.css';
 
 const BOARD_SIZE = 15;
@@ -15,22 +12,12 @@ const App = () => {
   const [currentPlayer, setCurrentPlayer] = useState(BLACK);
   const [seconds, setSeconds] = useState(30);
   const [gameStarted, setGameStarted] = useState(false);
-<<<<<<< HEAD
-=======
   const [roomCode, setRoomCode] = useState("");
   const socket = io("http://localhost:3000");  // replace with your server address
->>>>>>> main
 
   const handleClick = (i, j) => {
     if (board[i][j] !== EMPTY) return;
     setGameStarted(true);
-<<<<<<< HEAD
-    if (checkThreeThree(board, currentPlayer, i, j) || checkFourFour(board, currentPlayer, i, j)) {
-      window.alert(currentPlayer === BLACK ? '흑돌은 삼삼이나 사사이 상황이므로 돌을 놓을 수 없습니다.' : '삼삼이 상황이므로 돌을 놓을 수 없습니다.');
-      return;
-    }
-=======
->>>>>>> main
     const newBoard = [...board];
     newBoard[i][j] = currentPlayer;
     setBoard(newBoard);
@@ -41,27 +28,19 @@ const App = () => {
       setCurrentPlayer(currentPlayer === BLACK ? WHITE : BLACK);
       setSeconds(30);
     }
-<<<<<<< HEAD
-  }
-=======
     socket.emit('move made', { row: i, col: j, player: currentPlayer, room: roomCode });
   };
->>>>>>> main
 
   const resetBoard = () => {
     setBoard(Array(BOARD_SIZE).fill().map(() => Array(BOARD_SIZE).fill(EMPTY)));
     setCurrentPlayer(BLACK);
     setSeconds(30);
     setGameStarted(false);
-<<<<<<< HEAD
-  }
-=======
   };
 
   const joinRoom = () => {
     socket.emit("join room", roomCode);
   };
->>>>>>> main
 
   useEffect(() => {
     let timerId = null;
@@ -71,9 +50,6 @@ const App = () => {
       window.alert('You lose');
       resetBoard();
     }
-<<<<<<< HEAD
-  
-=======
 
     socket.on('move made', ({ row, col, player }) => {
       const newBoard = [...board];
@@ -83,15 +59,11 @@ const App = () => {
       setSeconds(30);
     });
 
->>>>>>> main
     return () => {
       if (timerId) {
         clearTimeout(timerId);
       }
-<<<<<<< HEAD
-=======
       socket.disconnect();
->>>>>>> main
     }
   }, [gameStarted, seconds]);
 
@@ -184,11 +156,8 @@ const App = () => {
 
   return (
     <div className="App">
-<<<<<<< HEAD
-=======
       <input value={roomCode} onChange={(e) => setRoomCode(e.target.value)} />
       <button onClick={joinRoom}>Join Room</button>
->>>>>>> main
       <div className="timer">Time remaining: {seconds} seconds</div>
       <div className="game-status">
         <div className="player">
