@@ -188,13 +188,7 @@ const App = () => {
         <>
           <input value={roomCode} onChange={(e) => setRoomCode(e.target.value)} />
           <button onClick={joinRoom}>Join Room</button>
-        </>
-      ) : !hasEnteredRoom ? (
-        <p>Waiting for another user to join...</p>
-      ) : (
-        <>
-          <div className="timer">Time remaining: {seconds} seconds</div>
-          <div className="game-status">
+         <div className="game-status">
             <div className="player">
               <div className="name">Player 1</div>
               <div className="stone emoji">⚫</div>
