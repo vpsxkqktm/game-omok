@@ -15,6 +15,7 @@ io.on('connection', (socket) => {
   socket.on('join room', (room) => {
     socket.join(room);
     console.log(`User joined room ${room}`);
+    io.to(room).emit('game start');
 
     // Get the list of clients in the room
     const clients = io.sockets.adapter.rooms.get(room);
@@ -22,12 +23,12 @@ io.on('connection', (socket) => {
     // If there are two users in the room, start the game
     if (clients.size === 2) {
       console.log(`Starting game in room ${room}`);  // Add this line
-      io.to(room).emit('game start');
+      io.emit('game start');
     }
   });
 
   socket.on('move made', ({ row, col, player, room }) => {
-    io.to(room).emit('move made', { row, col, player });
+    io.emit('move made', { row, col, player });
   });
 });
 

@@ -76,24 +76,23 @@ const App = () => {
     });
   
     socket.on('user joined', () => {
+      console.log("User joined event received");
       setHasEnteredRoom(true);
     });
     
-    useEffect(() => {
-      socket.on('game start', () => {
-        console.log("Game start event received");
-        setHasEnteredRoom(true);
-      });
-    
-      // Cleanup
-      return () => {
-        socket.off('game start');
-      };
-    }, []);
+    socket.on('game start', () => {
+      console.log("Game start event received");
+      setHasEnteredRoom(true);
+    });
   
-    // Clean up the effect
-    return () => socket.disconnect();
-  }, []);
+    // Cleanup
+    return () => {
+      socket.off('move made');
+      socket.off('user joined');
+      socket.off('game start');
+      socket.disconnect();
+    };
+}, []);
 
   const checkWin = (board, player, row, col) => {
     const directions = [[0, 1], [1, 0], [1, 1], [1, -1]];
@@ -188,7 +187,13 @@ const App = () => {
         <>
           <input value={roomCode} onChange={(e) => setRoomCode(e.target.value)} />
           <button onClick={joinRoom}>Join Room</button>
-         <div className="game-status">
+        </>
+      ) : !hasEnteredRoom ? (
+        <p>2222222222222222</p>
+      ) : (
+        <>
+          <div className="timer">Time remaining: {seconds} seconds</div>
+          <div className="game-status">
             <div className="player">
               <div className="name">Player 1</div>
               <div className="stone emoji">⚫</div>
