@@ -7,34 +7,59 @@ const EMPTY = 0;
 const BLACK = 1;
 const WHITE = 2;
 
+const socket = io("http://124.56.74.13:3000");
+
 const App = () => {
   const [board, setBoard] = useState(Array(BOARD_SIZE).fill().map(() => Array(BOARD_SIZE).fill(EMPTY)));
-  const [currentPlayer, setCurrentPlayer] = useState(BLACK);
+  const [currentPlayer, setCurrentPlayer] = useState(null);
+  const [myPlayer, setMyPlayer] = useState(null);
   const [seconds, setSeconds] = useState(30);
   const [gameStarted, setGameStarted] = useState(false);
   const [roomCode, setRoomCode] = useState("");
   const [hasCreatedRoom, setHasCreatedRoom] = useState(false);
   const [hasEnteredRoom, setHasEnteredRoom] = useState(false);
-  const socket = io("http://124.56.74.13:3000");
+
+  console.log("Current Player:", currentPlayer, "My Player:", myPlayer);
+
+  const handleMoveMade = ({ row, col, player }) => {
+    const newBoard = [...board];
+    newBoard[row][col] = player;
+    setBoard(newBoard);
+    setCurrentPlayer(player === BLACK ? WHITE : BLACK);
+    setSeconds(30);
+  };
 
   const handleClick = (i, j) => {
-    if (board[i][j] !== EMPTY) return;
-    setGameStarted(true);
-    if (checkThreeThree(board, currentPlayer, i, j) || checkFourFour(board, currentPlayer, i, j)) {
-      window.alert(currentPlayer === BLACK ? '흑돌은 삼삼이나 사사이 상황이므로 돌을 놓을 수 없습니다.' : '삼삼이 상황이므로 돌을 놓을 수 없습니다.');
+    console.log("Cell clicked:", i, j);
+  
+    // 내 차례가 아니면 리턴
+    if (currentPlayer !== myPlayer) {
+      console.log("Not your turn");
       return;
     }
+  
+    if (board[i][j] !== EMPTY) {
+      console.log("Cell already occupied");
+      return;
+    }
+  
+    if (myPlayer === BLACK && (checkThreeThree(board, myPlayer, i, j) || checkFourFour(board, myPlayer, i, j))) {
+      window.alert("Illegal move due to three-three or four-four rule"); // 콘솔 대신 메시지 박스로 출력
+      return;
+    }
+  
     const newBoard = [...board];
-    newBoard[i][j] = currentPlayer;
+    newBoard[i][j] = myPlayer;
     setBoard(newBoard);
-    if (checkWin(newBoard, currentPlayer, i, j)) {
-      window.alert(`Player ${currentPlayer === BLACK ? 'Black' : 'White'} won!`);
+  
+    if (checkWin(newBoard, myPlayer, i, j)) {
+      socket.emit('game over', roomCode); // 서버에 게임 오버 이벤트 전송
+      window.alert('You won!');
       resetBoard();
     } else {
-      setCurrentPlayer(currentPlayer === BLACK ? WHITE : BLACK);
       setSeconds(30);
+      socket.emit('move made', { row: i, col: j, player: myPlayer, room: roomCode });
     }
-    socket.emit('move made', { row: i, col: j, player: currentPlayer, room: roomCode });
   };
 
   const resetBoard = () => {
@@ -47,6 +72,7 @@ const App = () => {
   const joinRoom = () => {
     socket.emit("join room", roomCode);
     setHasCreatedRoom(true);
+    setMyPlayer(BLACK); // 첫 번째 참가자는 흑돌
   };
 
   useEffect(() => {
@@ -56,43 +82,63 @@ const App = () => {
     } else if (gameStarted && seconds === 0) {
       window.alert('You lose');
       resetBoard();
+      // 게임이 끝났을 때만 소켓 연결을 끊는다.
+      socket.disconnect();
     }
-
+  
     return () => {
       if (timerId) {
         clearTimeout(timerId);
       }
-      socket.disconnect();
-    }
+    };
   }, [gameStarted, seconds]);
   
+
   useEffect(() => {
-    socket.on('move made', ({ row, col, player }) => {
+    console.log("Setting up socket event listeners...");
+
+    const handleAssignPlayer = (player) => {
+      setMyPlayer(player);
+    };
+
+    socket.on('assign player', handleAssignPlayer);
+  
+    const handleMoveMade = ({ row, col, player }) => {
       const newBoard = [...board];
       newBoard[row][col] = player;
       setBoard(newBoard);
       setCurrentPlayer(player === BLACK ? WHITE : BLACK);
       setSeconds(30);
-    });
-  
-    socket.on('user joined', () => {
-      console.log("User joined event received");
-      setHasEnteredRoom(true);
-    });
+    };
+
+    const handleGameOver = () => {
+      if (myPlayer !== currentPlayer) {
+        window.alert('You lost.');
+      }
+      resetBoard();
+    };
     
-    socket.on('game start', () => {
+    socket.on('game over', handleGameOver);
+
+    const handleGameStart = ({ currentPlayer }) => {
       console.log("Game start event received");
       setHasEnteredRoom(true);
-    });
-  
-    // Cleanup
-    return () => {
-      socket.off('move made');
-      socket.off('user joined');
-      socket.off('game start');
-      socket.disconnect();
+      setCurrentPlayer(currentPlayer);
+      setGameStarted(true); // 게임 시작 상태 변경
     };
-}, []);
+  
+    socket.on('move made', handleMoveMade);
+    socket.on('game start', handleGameStart);
+  
+    return () => {
+      console.log("Tearing down socket event listeners...");
+      socket.off('move made', handleMoveMade);
+      socket.off('game start', handleGameStart);
+      socket.off('assign player', handleAssignPlayer);
+      socket.off('game over', handleGameOver); // 이벤트 리스너 제거
+    };
+  }, [board, currentPlayer, myPlayer]);
+  
 
   const checkWin = (board, player, row, col) => {
     const directions = [[0, 1], [1, 0], [1, 1], [1, -1]];
